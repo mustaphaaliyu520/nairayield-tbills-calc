@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NairaYield TBills-Calc | Treasury Bills Returns Calculator</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Print Styles for PDF Generation */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        padding: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      #results-container {
+        display: block !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen py-10 px-4 flex flex-col justify-between">
+
+  <div class="max-w-5xl mx-auto space-y-6 w-full">
+    <!-- Header -->
+    <div class="text-center space-y-2">
+      <div class="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-1 no-print">
+        Nigerian Fixed Income Tool
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        Treasury <span class="text-emerald-600">Bills-Calc</span>
+      </h1>
+      <p class="text-slate-600 text-sm sm:text-base max-w-lg mx-auto">
+        Calculate upfront discount interest, withholding tax, pro-rated custody fees, bank charges, and maturity dates for Nigerian Treasury Bills.
+      </p>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 no-print">
+      <form id="tbills-form" class="space-y-6">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <!-- Face Value -->
+          <div>
+            <label for="faceValue" class="block text-sm font-semibold text-slate-700 mb-2">
+              Face Value / Maturity Amount (₦)
+            </label>
+            <input 
+              type="number" 
+              id="faceValue" 
+              placeholder="e.g. 1000000" 
+              min="1" 
+              required
+              class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+            >
+          </div>
+
+          <!-- Investment Date -->
+          <div>
+            <label for="investmentDate" class="block text-sm font-semibold text-slate-700 mb-2">
+              Investment Start Date
+            </label>
+            <input 
+              type="date" 
+              id="investmentDate" 
+              required
+              class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+            >
+          </div>
+
+          <!-- Annual Rate -->
+          <div>
+            <label for="annualRate" class="block text-sm font-semibold text-slate-700 mb-2">
+              Annual Rate / Yield (%)
+            </label>
+            <input 
+              type="number" 
+              id="annualRate" 
+              step="0.01" 
+              placeholder="e.g. 18.5" 
+              min="0" 
+              required
+              class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+            >
+          </div>
+
+          <!-- Fixed Bank Fee -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Bank Fee (₦)
+            </label>
+            <input 
+              type="text" 
+              value="₦100.00 (Flat Fee)" 
+              disabled
+              class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-100 text-slate-600 font-medium cursor-not-allowed outline-none"
+            >
+          </div>
+
+          <!-- Custody Fee Note -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Custody Fee Formula
+            </label>
+            <input 
+              type="text" 
+              value="0.1% × (Tenor / 364)" 
+              disabled
+              class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-100 text-slate-600 font-medium cursor-not-allowed outline-none"
+            >
+          </div>
+
+          <!-- Day Count Convention -->
+          <div>
+            <label for="yearDays" class="block text-sm font-semibold text-slate-700 mb-2">
+              Day Count Convention
+            </label>
+            <select 
+              id="yearDays" 
+              class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-white"
+            >
+              <option value="364">364 Days (Standard T-Bills)</option>
+              <option value="365">365 Days (Actual Year)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tenor Selection -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">
+            Select Tenors to Compare
+          </label>
+          <div class="flex flex-wrap items-center gap-4 pt-1">
+            <label class="inline-flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" value="91" class="tenor-check text-emerald-600 rounded focus:ring-emerald-500 w-4 h-4" checked>
+              <span class="text-sm font-medium text-slate-700">91 Days</span>
+            </label>
+            <label class="inline-flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" value="182" class="tenor-check text-emerald-600 rounded focus:ring-emerald-500 w-4 h-4" checked>
+              <span class="text-sm font-medium text-slate-700">182 Days</span>
+            </label>
+            <label class="inline-flex items-center space-x-2 cursor-pointer">
+              <input type="checkbox" value="364" class="tenor-check text-emerald-600 rounded focus:ring-emerald-500 w-4 h-4" checked>
+              <span class="text-sm font-medium text-slate-700">364 Days</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Custom Tenor Input -->
+        <div>
+          <label for="customTenor" class="block text-sm font-semibold text-slate-700 mb-2">
+            Add Custom Tenor (Optional)
+          </label>
+          <div class="flex gap-3">
+            <input 
+              type="number" 
+              id="customTenor" 
+              placeholder="e.g. 45 or 210" 
+              min="1" 
+              class="w-full sm:w-1/2 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition text-sm"
+            >
+            <p class="text-xs text-slate-500 flex items-center">
+              Useful for secondary market T-Bills with remaining days to maturity.
+            </p>
+          </div>
+        </div>
+
+        <button 
+          type="button" 
+          onclick="calculateTBills()"
+          class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-md transition duration-150"
+        >
+          Calculate Returns
+        </button>
+      </form>
+    </div>
+
+    <!-- Results Table -->
+    <div id="results-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Investment Breakdown</h2>
+          <span class="text-xs bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full font-medium inline-block mt-1">Upfront Discount Method</span>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2 no-print">
+          <button 
+            type="button" 
+            onclick="exportToCSV()" 
+            class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg border border-slate-300 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export CSV
+          </button>
+          
+          <button 
+            type="button" 
+            onclick="window.print()" 
+            class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-lg shadow transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            Print / PDF
+          </button>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+            <tr>
+              <th class="py-3.5 px-4">Tenor</th>
+              <th class="py-3.5 px-4">Maturity Date</th>
+              <th class="py-3.5 px-4">Gross Interest</th>
+              <th class="py-3.5 px-4">WHT (10%)</th>
+              <th class="py-3.5 px-4">Custody Fee</th>
+              <th class="py-3.5 px-4">Bank Fee</th>
+              <th class="py-3.5 px-4">Net Interest</th>
+              <th class="py-3.5 px-4">Upfront Cost</th>
+            </tr>
+          </thead>
+          <tbody id="results-table-body" class="divide-y divide-slate-200">
+            <!-- Dynamic rows inserted here -->
+          </tbody>
+        </table>
+      </div>
+      <div class="p-4 bg-slate-50 text-xs text-slate-500">
+        * <strong>Custody Fee</strong> = Face Value × 0.001 × (Tenor / 364). <br>
+        * <strong>Upfront Cost</strong> = Face Value - Net Interest. You pay the Upfront Cost today and receive the full Face Value at maturity.
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Disclaimer -->
+  <footer class="max-w-5xl mx-auto mt-12 pt-6 border-t border-slate-200 text-center text-xs text-slate-500 leading-relaxed space-y-1">
+    <p class="font-semibold text-slate-600">NairaYield TBills-Calc • Disclaimer</p>
+    <p>
+      This calculator is provided for estimation and illustrative purposes only. Actual yields, withholding tax deductions, bank charges, 
+      and custody fees may vary depending on market conditions and broker policies. 
+      This tool does not constitute financial advice.
+    </p>
+    <p class="text-slate-400 pt-2 border-t border-slate-100 max-w-xs mx-auto">
+      &copy; 2026 <span class="font-semibold text-slate-600">Alimoney</span>. All rights reserved.
+    </p>
+  </footer>
+
+  <script>
+    document.getElementById('investmentDate').valueAsDate = new Date();
+
+    let currentCalculationResults = [];
+
+    function formatNaira(amount) {
+      return new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        minimumFractionDigits: 2
+      }).format(amount);
+    }
+
+    function calculateTBills() {
+      const faceValue = parseFloat(document.getElementById('faceValue').value);
+      const startDateVal = document.getElementById('investmentDate').value;
+      const annualRate = parseFloat(document.getElementById('annualRate').value);
+      const yearDays = parseInt(document.getElementById('yearDays').value, 10);
+      const customTenorVal = parseInt(document.getElementById('customTenor').value, 10);
+      
+      const selectedTenors = Array.from(document.querySelectorAll('.tenor-check:checked'))
+                                 .map(cb => parseInt(cb.value, 10));
+
+      if (!isNaN(customTenorVal) && customTenorVal > 0 && !selectedTenors.includes(customTenorVal)) {
+        selectedTenors.push(customTenorVal);
+        selectedTenors.sort((a, b) => a - b);
+      }
+
+      if (!faceValue || !startDateVal || isNaN(annualRate) || selectedTenors.length === 0) {
+        alert('Please complete all required fields and select or specify at least one tenor.');
+        return;
+      }
+
+      const tableBody = document.getElementById('results-table-body');
+      tableBody.innerHTML = '';
+      currentCalculationResults = [];
+
+      const WHT_RATE = 0.10;
+      const BANK_FEE = 100.00;
+
+      selectedTenors.forEach(tenor => {
+        const startDate = new Date(startDateVal);
+        const maturityDate = new Date(startDate);
+        maturityDate.setDate(maturityDate.getDate() + tenor);
+        const formattedMaturityDate = maturityDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+        // Calculations
+        const grossInterest = faceValue * (annualRate / 100) * (tenor / yearDays);
+        const withholdingTax = grossInterest * WHT_RATE;
+        const custodyFee = faceValue * 0.001 * (tenor / 364);
+        
+        const netInterest = grossInterest - withholdingTax - custodyFee - BANK_FEE;
+        const upfrontInvestmentCost = faceValue - netInterest;
+
+        // Save state for CSV Export
+        currentCalculationResults.push({
+          tenor: `${tenor} Days`,
+          maturityDate: formattedMaturityDate,
+          grossInterest: grossInterest.toFixed(2),
+          wht: withholdingTax.toFixed(2),
+          custodyFee: custodyFee.toFixed(2),
+          bankFee: BANK_FEE.toFixed(2),
+          netInterest: netInterest.toFixed(2),
+          upfrontCost: upfrontInvestmentCost.toFixed(2)
+        });
+
+        // Add Row
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-slate-50 transition';
+        row.innerHTML = `
+          <td class="py-3.5 px-4 font-semibold text-slate-900">${tenor} Days ${tenor === customTenorVal ? '<span class="text-xs text-emerald-600 font-normal">(Custom)</span>' : ''}</td>
+          <td class="py-3.5 px-4">${formattedMaturityDate}</td>
+          <td class="py-3.5 px-4">${formatNaira(grossInterest)}</td>
+          <td class="py-3.5 px-4 text-red-600">-${formatNaira(withholdingTax)}</td>
+          <td class="py-3.5 px-4 text-red-600">-${formatNaira(custodyFee)}</td>
+          <td class="py-3.5 px-4 text-red-600">-${formatNaira(BANK_FEE)}</td>
+          <td class="py-3.5 px-4 font-semibold text-emerald-600">${formatNaira(netInterest)}</td>
+          <td class="py-3.5 px-4 font-bold text-slate-900">${formatNaira(upfrontInvestmentCost)}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      document.getElementById('results-container').classList.remove('hidden');
+    }
+
+    function exportToCSV() {
+      if (!currentCalculationResults || currentCalculationResults.length === 0) {
+        alert('No calculation data available to export.');
+        return;
+      }
+
+      const faceValue = document.getElementById('faceValue').value;
+      const annualRate = document.getElementById('annualRate').value;
+      const startDate = document.getElementById('investmentDate').value;
+
+      const headers = ["Tenor", "Maturity Date", "Gross Interest (NGN)", "WHT 10% (NGN)", "Custody Fee (NGN)", "Bank Fee (NGN)", "Net Interest (NGN)", "Upfront Cost (NGN)"];
+      
+      const csvRows = [
+        [`NairaYield TBills-Calc Investment Summary`],
+        [`Face Value: NGN ${faceValue}`, `Annual Rate: ${annualRate}%`, `Bank Fee: NGN 100.00`, `Start Date: ${startDate}`],
+        [],
+        headers
+      ];
+
+      currentCalculationResults.forEach(item => {
+        csvRows.push([
+          `"${item.tenor}"`,
+          `"${item.maturityDate}"`,
+          item.grossInterest,
+          item.wht,
+          item.custodyFee,
+          item.bankFee,
+          item.netInterest,
+          item.upfrontCost
+        ]);
+      });
+
+      const csvContent = csvRows.map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `NairaYield_TBills_Breakdown_${startDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
